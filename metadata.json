@@ -1,0 +1,5 @@
+{
+  "name": "PyTutor AI",
+  "description": "An interactive, AI-powered Python self-learning platform. Features a structured curriculum, AI-generated lessons, a code simulator, and a personalized AI tutor using the Gemini API.",
+  "requestFramePermissions": []
+}
