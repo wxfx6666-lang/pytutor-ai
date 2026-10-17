@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
 import { CURRICULUM } from './constants';
 import { LessonTopic, ChatMessage, UserData, TopicProgress, Module } from './types';
 import { api } from './api';
@@ -26,16 +26,28 @@ import {
   Layout,
   Cpu
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+const ReactMarkdown = React.lazy(() => import('react-markdown'));
 
-// 初始化 Gemini API 客户端
+// Gemini 客户端按需加载，避免把 AI SDK 打进首屏 bundle。
 const apiKey = process.env.API_KEY;
-let ai: GoogleGenAI;
-try {
-  ai = new GoogleGenAI({ apiKey: apiKey || '' });
-} catch (e) {
-  console.error("Failed to initialize GoogleGenAI client", e);
-}
+let aiClientPromise: Promise<GoogleGenAI> | null = null;
+
+const getAiClient = async (): Promise<GoogleGenAI> => {
+  if (!apiKey) {
+    throw new Error("未配置 GEMINI_API_KEY");
+  }
+
+  if (!aiClientPromise) {
+    aiClientPromise = import("@google/genai")
+      .then(({ GoogleGenAI }) => new GoogleGenAI({ apiKey }))
+      .catch((error) => {
+        aiClientPromise = null;
+        throw error;
+      });
+  }
+
+  return aiClientPromise;
+};
 
 // --- 辅助函数：查找 Topic ---
 const findTopicById = (moduleId: string, topicId: string): LessonTopic | undefined => {
@@ -330,8 +342,7 @@ const App = () => {
           systemPrompt = `你是一位友好的 Python 老师。当前课程是：${topic.title}。请用简洁的中文介绍这个概念，并给出一个简单的代码示例。${topic.promptTopic}`;
       }
 
-      if (!ai) throw new Error("AI client not initialized");
-      
+      const ai = await getAiClient();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [{ parts: [{ text: systemPrompt }] }], 
@@ -384,7 +395,7 @@ const App = () => {
       请用中文回答。如果用户在做项目，检查代码进度并给出指引。如果代码有错误，请温柔地指出。
       `;
 
-      if (!ai) throw new Error("AI client not initialized");
+      const ai = await getAiClient();
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
@@ -441,8 +452,7 @@ ${code}
     `;
 
     try {
-      if (!ai) throw new Error("AI client not initialized");
-      
+      const ai = await getAiClient();
       // 2. 调用 Gemini 流式接口 (generateContentStream)
       // 使用流式输出可以让用户像看真实终端一样，看着文字一个个蹦出来，体验更好，
       // 而不是等几秒钟然后一次性显示所有结果。
@@ -678,14 +688,16 @@ ${code}
                             : 'bg-slate-800/80 text-slate-100 rounded-bl-none border border-white/5'
                         }`}
                         >
-                        <ReactMarkdown 
-                            components={{
-                                code: ({node, ...props}) => <code className="bg-black/30 rounded px-1 py-0.5 text-brand-200 font-mono text-xs" {...props} />,
-                                pre: ({node, ...props}) => <pre className="bg-black/30 rounded-lg p-3 my-2 overflow-x-auto text-xs" {...props} />
-                            }}
-                        >
-                            {msg.text}
-                        </ReactMarkdown>
+                        <React.Suspense fallback={<p>{msg.text}</p>}>
+                          <ReactMarkdown
+                              components={{
+                                  code: ({node, ...props}) => <code className="bg-black/30 rounded px-1 py-0.5 text-brand-200 font-mono text-xs" {...props} />,
+                                  pre: ({node, ...props}) => <pre className="bg-black/30 rounded-lg p-3 my-2 overflow-x-auto text-xs" {...props} />
+                              }}
+                          >
+                              {msg.text}
+                          </ReactMarkdown>
+                        </React.Suspense>
                         </div>
                     </div>
                   </div>

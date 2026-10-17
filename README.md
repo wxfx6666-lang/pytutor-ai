@@ -1,20 +1,45 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# PyTutor AI
 
-# Run and deploy your AI Studio app
+PyTutor AI 是一个面向 Python 初学者的交互式学习应用，提供课程导航、AI
+导师、代码编辑器和学习进度保存。
 
-This contains everything you need to run your app locally.
+## 本地运行
 
-View your app in AI Studio: https://ai.studio/apps/drive/1nHOwL-PrqqsZarGiXRBeWXACoL4EqCnn
+环境要求：Node.js 20.19+、npm 10+。
 
-## Run Locally
+1. 安装依赖：
 
-**Prerequisites:**  Node.js
+   ```bash
+   npm install
+   ```
 
+2. 复制环境变量模板并填写 Gemini API Key：
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. 启动前端开发服务器：
+
+   ```bash
+   npm run dev
+   ```
+
+4. 构建并检查 TypeScript：
+
+   ```bash
+   npm run build
+   ```
+
+## 可选：启用 MySQL 后端
+
+1. 在 MySQL 中执行 `schema.sql`。
+2. 设置 `DB_HOST`、`DB_USER`、`DB_PASSWORD` 和 `DB_NAME` 环境变量。
+3. 将 `api.ts` 中的 `USE_MOCK_BACKEND` 改为 `false`。
+4. 启动后端：
+
+   ```bash
+   npm run server
+   ```
+
+后端默认监听 `http://localhost:3001`。数据库密码不会从源码中读取。
