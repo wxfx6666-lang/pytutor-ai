@@ -9,12 +9,11 @@ const PORT = 3001;
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 
-// 数据库配置
-// 密码已更新为用户指定的 '123456'
+// 数据库配置。密码只从环境变量读取，避免把凭据提交到仓库。
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '123456', // 这里修改了密码
+    password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME || 'pytutor',
     waitForConnections: true,
     connectionLimit: 10,
